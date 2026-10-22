@@ -8,8 +8,6 @@
 </p>
 
 <p align="center">
-  <a href="https://stradarotibp.z28.web.core.windows.net/"><b>Ver el radar en directo</b></a>
-  &nbsp;·&nbsp;
   <a href="#cómo-funciona">Cómo funciona</a>
   &nbsp;·&nbsp;
   <a href="#parte-técnica">Parte técnica</a>
@@ -23,6 +21,8 @@
   <img src="https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white" alt="Python">
   <img src="https://img.shields.io/badge/coste-~0%20%E2%82%AC%2Fmes-2ea44f" alt="Coste">
 </p>
+
+> **Nota:** la demo en directo está apagada para no generar costes en Azure. Las capturas son del radar funcionando; se vuelve a poner en marcha en unos minutos con `bash desplegar.sh` (ver [Desplegarlo](#desplegarlo)).
 
 <p align="center">
   <img src="docs/img/radar.png" alt="El radar mostrando los aviones sobre Catalunya" width="640">
