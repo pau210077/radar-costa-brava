@@ -1,0 +1,14 @@
+# Terraform (el estado contiene claves: nunca subirlo a GitHub)
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+
+# Python
+__pycache__/
+.venv/
+.python_packages/
+local.settings.json
+
+# Despliegue
+funcion.zip

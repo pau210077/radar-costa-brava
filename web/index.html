@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Radar Costa Brava</title>
+  <meta name="description" content="Aviones en directo entre Barcelona y la Costa Brava.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=B612:wght@400;700&family=B612+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+  <link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+  <header class="bar">
+    <h1>Radar Costa Brava</h1>
+    <p class="status" id="status" aria-live="polite">Buscando aviones…</p>
+  </header>
+
+  <main class="layout">
+    <section class="chart" aria-label="Mapa de aviones">
+      <div id="map"></div>
+      <div class="legend" aria-label="Leyenda">
+        <span><i class="sw sw-low"></i>Vuela bajo</span>
+        <span><i class="sw sw-mid"></i>Altura media</span>
+        <span><i class="sw sw-high"></i>Vuela alto</span>
+        <span><i class="sw sw-ground"></i>En el aeropuerto</span>
+        <label class="toggle"><input type="checkbox" id="tags" checked> Nombres de los vuelos</label>
+      </div>
+    </section>
+
+    <aside class="log" aria-label="Resumen del día">
+      <p class="headline" id="headline">Cargando…</p>
+
+      <h2>Récords de hoy</h2>
+      <dl class="records" id="records"></dl>
+
+      <h2>Aerolíneas más vistas hoy</h2>
+      <ol class="bars" id="airlines"></ol>
+
+      <h2>Últimos 7 días</h2>
+      <div class="week" id="week" role="img" aria-label="Aviones distintos por día"></div>
+
+      <p class="note">
+        Aviones reales, con datos abiertos de <a href="https://adsb.lol" rel="noopener">adsb.lol</a>.
+        Una Azure Function los recoge cada 5 minutos; entre medias, cada avión se mueve según su rumbo y su velocidad.
+        Pulsa en cualquier avión para ver sus datos.
+      </p>
+    </aside>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

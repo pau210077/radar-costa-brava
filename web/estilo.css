@@ -1,0 +1,225 @@
+/* Paleta inspirada en las cartas aeronáuticas OACI:
+   azul para espacio aéreo controlado, magenta para aeródromos y radioayudas. */
+:root {
+  --paper: #f2f5f4;
+  --sea: #cfe3ea;
+  --ink: #18222b;
+  --ink-soft: #4d5b66;
+  --rule: #c6d1d6;
+  --chart-blue: #1f4e79;
+  --magenta: #b0177e;
+  --violet: #6a3fa0;
+  --ground: #8a97a3;
+  --panel: #ffffff;
+
+  --sans: "B612", "Segoe UI", system-ui, sans-serif;
+  --mono: "B612 Mono", ui-monospace, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #0f1a22;
+    --sea: #172a38;
+    --ink: #e6edf0;
+    --ink-soft: #9fb0ba;
+    --rule: #2a3a46;
+    --chart-blue: #6fa8dc;
+    --magenta: #e05fb4;
+    --violet: #a98ae0;
+    --ground: #6c7a85;
+    --panel: #142430;
+  }
+}
+
+* { box-sizing: border-box; }
+
+html, body { height: 100%; margin: 0; }
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font: 15px/1.5 var(--sans);
+  display: flex;
+  flex-direction: column;
+}
+
+a { color: var(--chart-blue); }
+a:focus-visible, input:focus-visible { outline: 2px solid var(--magenta); outline-offset: 2px; }
+
+/* ---------- barra superior ---------- */
+.bar {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 0.75rem 1.25rem;
+  border-bottom: 1px solid var(--rule);
+}
+
+.bar h1 {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--chart-blue);
+}
+
+.status { margin: 0; font-size: 0.875rem; color: var(--ink-soft); }
+.status.live::before {
+  content: "";
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.5rem;
+  margin-right: 0.45rem;
+  border-radius: 50%;
+  background: var(--magenta);
+  vertical-align: 0.05rem;
+}
+.status.error { color: var(--magenta); }
+
+/* ---------- distribución ---------- */
+.layout {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 22rem;
+  min-height: 0;
+}
+
+.chart { position: relative; min-height: 60vh; }
+#map { position: absolute; inset: 0; background: var(--sea); }
+
+.log {
+  background: var(--panel);
+  border-left: 1px solid var(--rule);
+  padding: 1.25rem 1.25rem 2rem;
+  overflow-y: auto;
+}
+
+@media (max-width: 860px) {
+  html, body { height: auto; }
+  .layout { display: block; }
+  .chart { display: flex; flex-direction: column; }
+  #map { position: relative; inset: auto; height: 58vh; }
+  .log { overflow: visible; border-left: 0; border-top: 1px solid var(--rule); }
+}
+
+/* ---------- panel de resumen ---------- */
+.headline {
+  margin: 0 0 1.5rem;
+  font-size: 1.3rem;
+  line-height: 1.35;
+  max-width: 22ch;
+}
+.headline strong { color: var(--chart-blue); font-size: 2.1rem; display: block; line-height: 1.1; }
+
+.log h2 {
+  margin: 1.75rem 0 0.6rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--ink);
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid var(--rule);
+}
+
+.records { margin: 0; display: grid; gap: 0.6rem; }
+.records div { display: grid; grid-template-columns: 6.5rem 1fr; gap: 0.75rem; }
+.records dt { color: var(--ink-soft); font-size: 0.85rem; padding-top: 0.1rem; }
+.records dd { margin: 0; }
+.records .call { font-family: var(--mono); font-weight: 700; }
+.records .sub { display: block; color: var(--ink-soft); font-size: 0.85rem; }
+
+.bars { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.45rem; }
+.bars li { display: grid; grid-template-columns: 8rem 1fr 2.5rem; align-items: center; gap: 0.5rem; font-size: 0.9rem; }
+.bars .track { height: 0.55rem; background: var(--rule); border-radius: 1px; }
+.bars .fill { height: 100%; background: var(--chart-blue); border-radius: 1px; }
+.bars .n { font-family: var(--mono); text-align: right; color: var(--ink-soft); }
+
+.week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.4rem; align-items: end; height: 7.5rem; }
+.week .day { display: flex; flex-direction: column; align-items: center; gap: 0.25rem; height: 100%; justify-content: flex-end; }
+.week .col { width: 100%; background: var(--chart-blue); opacity: 0.35; min-height: 2px; }
+.week .day.today .col { opacity: 1; }
+.week .v { font-family: var(--mono); font-size: 0.72rem; color: var(--ink-soft); }
+.week .d { font-size: 0.75rem; color: var(--ink-soft); }
+
+.empty { color: var(--ink-soft); font-size: 0.9rem; margin: 0; }
+
+.note { margin-top: 2rem; font-size: 0.8rem; color: var(--ink-soft); max-width: 40ch; }
+
+/* ---------- leyenda del mapa ---------- */
+.legend {
+  position: absolute;
+  left: 0.75rem;
+  bottom: 1.6rem;
+  z-index: 500;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1rem;
+  max-width: calc(100% - 1.5rem);
+  padding: 0.5rem 0.75rem;
+  background: color-mix(in srgb, var(--panel) 92%, transparent);
+  border: 1px solid var(--rule);
+  font-size: 0.78rem;
+}
+.legend span { white-space: nowrap; }
+@media (max-width: 860px) {
+  .legend {
+    position: static;
+    max-width: none;
+    border-width: 1px 0 0;
+    background: var(--panel);
+    padding: 0.6rem 1.25rem;
+  }
+}
+
+.sw { display: inline-block; width: 0.7rem; height: 0.7rem; margin-right: 0.35rem; vertical-align: -0.05rem; }
+.sw-low { background: var(--magenta); }
+.sw-mid { background: var(--violet); }
+.sw-high { background: var(--chart-blue); }
+.sw-ground { background: var(--ground); border-radius: 50%; }
+.toggle { cursor: pointer; white-space: nowrap; }
+
+/* ---------- aviones y bloques de datos (estilo pantalla ATC) ---------- */
+.plane { position: relative; }
+.plane svg { position: absolute; left: -9px; top: -9px; width: 18px; height: 18px; overflow: visible; }
+.plane .tag {
+  position: absolute;
+  left: 14px;
+  top: -22px;
+  padding-left: 6px;
+  border-left: 1px solid currentColor;
+  font: 700 10.5px/1.25 var(--mono);
+  white-space: nowrap;
+  color: inherit;
+  text-shadow: 0 0 3px var(--paper), 0 0 3px var(--paper);
+  pointer-events: none;
+}
+.plane .tag span { display: block; font-weight: 400; }
+body.no-tags .plane .tag { display: none; }
+
+.alt-low { color: var(--magenta); }
+.alt-mid { color: var(--violet); }
+.alt-high { color: var(--chart-blue); }
+.alt-ground { color: var(--ground); }
+
+.airport-label {
+  font: 700 11px/1.2 var(--sans);
+  color: var(--magenta);
+  white-space: nowrap;
+  text-shadow: 0 0 3px var(--paper), 0 0 3px var(--paper);
+}
+
+.leaflet-container { font-family: var(--sans); }
+
+/* Mapa de OpenStreetMap en gris, para que los aviones de colores destaquen;
+   en modo oscuro se invierte para que parezca una pantalla de radar. */
+.leaflet-tile-pane { filter: grayscale(1) brightness(1.04) contrast(0.92); }
+@media (prefers-color-scheme: dark) {
+  .leaflet-tile-pane { filter: grayscale(1) invert(1) brightness(0.75) contrast(1.1); }
+}
+.leaflet-popup-content { font-size: 0.85rem; line-height: 1.45; margin: 0.75rem 0.9rem; }
+.leaflet-popup-content b { font-family: var(--mono); font-size: 0.95rem; }
+
+@media (prefers-color-scheme: dark) {
+  .leaflet-popup-content-wrapper, .leaflet-popup-tip { background: var(--panel); color: var(--ink); }
+}
