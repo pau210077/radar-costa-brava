@@ -11,6 +11,9 @@
   --violet: #6a3fa0;
   --ground: #8a97a3;
   --panel: #ffffff;
+  --ok: #1e8a4c;
+  --aviso: #b97f00;
+  --mal: #c62828;
 
   --sans: "B612", "Segoe UI", system-ui, sans-serif;
   --mono: "B612 Mono", ui-monospace, monospace;
@@ -28,6 +31,9 @@
     --violet: #a98ae0;
     --ground: #6c7a85;
     --panel: #142430;
+    --ok: #4cc27f;
+    --aviso: #e3b341;
+    --mal: #ef6b6b;
   }
 }
 
@@ -65,18 +71,39 @@ a:focus-visible, input:focus-visible { outline: 2px solid var(--magenta); outlin
   color: var(--chart-blue);
 }
 
-.status { margin: 0; font-size: 0.875rem; color: var(--ink-soft); }
-.status.live::before {
-  content: "";
-  display: inline-block;
-  width: 0.5rem;
-  height: 0.5rem;
-  margin-right: 0.45rem;
-  border-radius: 50%;
-  background: var(--magenta);
-  vertical-align: 0.05rem;
+.bar-estado {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.25rem;
 }
+
+.status { margin: 0; font-size: 0.875rem; color: var(--ink-soft); }
 .status.error { color: var(--magenta); }
+
+/* Estado del sistema: verde = va bien, amarillo = con retraso, rojo = parado */
+.salud {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.875rem;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+.salud strong { color: var(--ink); font-weight: 700; }
+.salud .punto {
+  flex: none;
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  background: var(--ground);
+}
+.salud.ok .punto { background: var(--ok); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok) 22%, transparent); }
+.salud.aviso .punto { background: var(--aviso); box-shadow: 0 0 0 3px color-mix(in srgb, var(--aviso) 22%, transparent); }
+.salud.mal .punto { background: var(--mal); box-shadow: 0 0 0 3px color-mix(in srgb, var(--mal) 22%, transparent); }
+.salud.mal strong { color: var(--mal); }
+@media (max-width: 520px) { .salud { white-space: normal; } }
 
 /* ---------- distribución ---------- */
 .layout {

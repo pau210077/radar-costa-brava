@@ -14,7 +14,13 @@
 <body>
   <header class="bar">
     <h1>Radar Costa Brava</h1>
-    <p class="status" id="status" aria-live="polite">Buscando aviones…</p>
+    <div class="bar-estado">
+      <p class="status" id="status" aria-live="polite">Buscando aviones…</p>
+      <p class="salud" id="salud" title="Estado del sistema: depende de lo recientes que sean los datos">
+        <span class="punto" aria-hidden="true"></span>
+        <span id="salud-texto">Comprobando el sistema…</span>
+      </p>
+    </div>
   </header>
 
   <main class="layout">

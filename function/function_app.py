@@ -218,6 +218,11 @@ def radar(timer: func.TimerRequest) -> None:
     ahora = datetime.now(HORA_LOCAL)
     hoy = ahora.strftime("%Y-%m-%d")
 
+    # Para probar las alertas: con SIMULAR_FALLO=true en los ajustes de la Function App,
+    # cada ejecución falla a propósito y no se guardan datos.
+    if os.environ.get("SIMULAR_FALLO", "false").lower() == "true":
+        raise RuntimeError("Fallo simulado: SIMULAR_FALLO está en true")
+
     try:
         aviones = pedir_aviones()
     except requests.RequestException as error:
@@ -250,4 +255,6 @@ def radar(timer: func.TimerRequest) -> None:
         if blob.name < f"datos/dias/{viejo}.json":
             web.delete_blob(blob.name)
 
+    # Este mensaje solo sale si los datos se han guardado bien. La alerta "El radar se ha
+    # parado" y el Workbook lo buscan en Application Insights: si cambias el texto, cámbialo allí.
     logging.info("Radar: %d aviones ahora, %d hoy", len(aviones), historial[hoy])

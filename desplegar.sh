@@ -61,7 +61,9 @@ cat <<EOF
  Radar desplegado
 
  Web: $WEB
+ Alertas: ${EMAIL:-sin email, no se han creado alertas}
 
  Los primeros aviones aparecen en menos de 5 minutos.
+ Si has puesto email, Azure te avisa por correo de que te ha añadido al Action Group.
 =====================================================
 EOF
