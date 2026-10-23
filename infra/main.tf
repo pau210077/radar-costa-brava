@@ -23,7 +23,7 @@ variable "region" {
 }
 
 variable "email_alertas" {
-  description = "Email para el aviso de presupuesto (vacío = sin presupuesto)"
+  description = "Email para las alertas y el aviso de presupuesto (vacío = sin avisos)"
   default     = ""
 }
 
@@ -111,6 +111,8 @@ resource "azurerm_linux_function_app" "radar" {
   app_settings = {
     SCM_DO_BUILD_DURING_DEPLOYMENT = "true"
     ENABLE_ORYX_BUILD              = "true"
+    # true = la función falla a propósito, para probar las alertas (ver README)
+    SIMULAR_FALLO = "false"
   }
 
   lifecycle {
