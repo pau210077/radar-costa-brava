@@ -91,3 +91,63 @@ resource "azurerm_monitor_metric_alert" "funcion_falla" {
     action_group_id = azurerm_monitor_action_group.radar[0].id
   }
 }
+
+# Prueba de disponibilidad: Azure abre la web desde 5 sitios de Europa cada 15 minutos.
+# Es la prueba "ping" clásica, que es gratis. Microsoft la retira el 30/09/2028;
+# la sustituta (prueba "estándar") se cobra por ejecución. Más detalle en el README.
+resource "azurerm_application_insights_web_test" "web" {
+  name                    = "web-radar-${local.sufijo}"
+  resource_group_name     = azurerm_resource_group.radar.name
+  location                = azurerm_resource_group.radar.location
+  application_insights_id = azurerm_application_insights.radar.id
+  kind                    = "ping"
+  frequency               = 900
+  timeout                 = 30
+  enabled                 = true
+  description             = "Comprueba que la web del radar responde"
+  geo_locations = [
+    "emea-nl-ams-azr",  # West Europe
+    "emea-gb-db3-azr",  # North Europe
+    "emea-fr-pra-edge", # France Central
+    "emea-ch-zrh-edge", # France South
+    "emea-ru-msa-edge", # UK South
+  ]
+
+  configuration = <<-XML
+    <WebTest Name="web-radar" Id="5b0bd4a6-1f0e-4f4e-9d6c-2f8a8a0c7e11" Enabled="True" Timeout="30" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010" PreAuthenticate="True" Proxy="default" StopOnError="False">
+      <Items>
+        <Request Method="GET" Guid="0c3f3c1e-7a51-4b8e-a1b8-6d4c3c2b9f20" Version="1.1" Url="${azurerm_storage_account.radar.primary_web_endpoint}" ThinkTime="0" Timeout="30" ParseDependentRequests="False" FollowRedirects="True" RecordResult="True" Cache="False" ResponseTimeGoal="0" Encoding="utf-8" ExpectedHttpStatusCode="200" IgnoreHttpStatusCode="False" />
+      </Items>
+    </WebTest>
+  XML
+
+  lifecycle {
+    # Azure añade una etiqueta "hidden-link" que enlaza la prueba con App Insights
+    ignore_changes = [tags]
+  }
+}
+
+# Alerta 3: "La web no responde"
+# Salta si la web falla desde 3 de los 5 sitios a la vez (si falla solo uno,
+# seguramente es un problema de red de ese sitio y no de la web).
+resource "azurerm_monitor_metric_alert" "web_caida" {
+  count               = local.con_alertas ? 1 : 0
+  name                = "La web no responde"
+  description         = "La web del radar no responde desde al menos 3 de las 5 ubicaciones de prueba."
+  resource_group_name = azurerm_resource_group.radar.name
+  scopes              = [azurerm_application_insights_web_test.web.id, azurerm_application_insights.radar.id]
+  severity            = 1
+  frequency           = "PT5M"
+  window_size         = "PT15M"
+  tags                = local.tags
+
+  application_insights_web_test_location_availability_criteria {
+    web_test_id           = azurerm_application_insights_web_test.web.id
+    component_id          = azurerm_application_insights.radar.id
+    failed_location_count = 3
+  }
+
+  action {
+    action_group_id = azurerm_monitor_action_group.radar[0].id
+  }
+}
