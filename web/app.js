@@ -161,6 +161,45 @@ function pintarSemana(historial) {
     .join("");
 }
 
+// ---------- estado del sistema ----------
+// La función guarda datos nuevos cada 5 minutos. Según lo viejos que sean los últimos:
+// verde = todo bien, amarillo = se ha saltado alguna lectura, rojo = parado
+// (15 minutos, lo mismo que la alerta "El radar se ha parado" de Azure).
+const MIN_RETRASO = 10;
+const MIN_PARADO = 15;
+let ultimaLectura = null;
+let textoAviones = "";
+
+function haceCuanto(minutos) {
+  if (minutos < 1) return "hace menos de 1 min";
+  if (minutos < 60) return `hace ${minutos} min`;
+  const horas = Math.floor(minutos / 60);
+  if (horas < 24) return `hace ${horas} h`;
+  const dias = Math.floor(horas / 24);
+  return `hace ${dias} ${dias === 1 ? "día" : "días"}`;
+}
+
+function salud(nivel, titulo, detalle) {
+  $("salud").className = `salud ${nivel}`;
+  $("salud-texto").innerHTML = `<strong>${titulo}</strong>${detalle ? ` · ${detalle}` : ""}`;
+}
+
+function pintarSalud() {
+  if (ultimaLectura == null) return;
+  const minutos = Math.max(0, Math.floor((Date.now() - ultimaLectura) / 60_000));
+  const detalle = `Última actualización ${haceCuanto(minutos)}`;
+  if (minutos >= MIN_PARADO) {
+    salud("mal", "Radar parado", detalle);
+    estado("Se muestra la última lectura guardada: los aviones pueden no estar ahí ahora.", "error");
+    return;
+  }
+  if (minutos >= MIN_RETRASO) salud("aviso", "Con retraso", detalle);
+  else salud("ok", "Funcionando", detalle);
+  estado(textoAviones, "live");
+}
+
+setInterval(pintarSalud, 30_000);
+
 function estado(texto, clase = "") {
   $("status").textContent = texto;
   $("status").className = "status " + clase;
@@ -172,6 +211,7 @@ async function cargar() {
     const respuesta = await fetch("datos/live.json", { cache: "no-store" });
     if (respuesta.status === 404) {
       estado("El radar acaba de arrancar: la primera lectura llega en menos de 5 minutos.");
+      salud("aviso", "Arrancando", "todavía no hay datos");
       return;
     }
     const datos = await respuesta.json();
@@ -181,12 +221,16 @@ async function cargar() {
 
     const volando = datos.aviones.filter((a) => !a.en_tierra).length;
     const hora = new Date(datos.actualizado).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
-    estado(`${num(volando)} aviones volando ahora mismo. Última lectura a las ${hora}.`, "live");
+    textoAviones = `${num(volando)} aviones volando ahora mismo.`;
+    ultimaLectura = horaLectura;
+    pintarSalud();
+    $("salud").title = `Última lectura a las ${hora}`;
 
     const historial = await fetch("datos/historial.json", { cache: "no-store" });
     if (historial.ok) pintarSemana(await historial.json());
   } catch (error) {
     estado("No se han podido cargar los datos. Se vuelve a intentar en un minuto.", "error");
+    if (ultimaLectura == null) salud("mal", "Sin datos", "no se puede leer el radar");
     console.error(error);
   }
 }
