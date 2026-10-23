@@ -151,3 +151,121 @@ resource "azurerm_monitor_metric_alert" "web_caida" {
     action_group_id = azurerm_monitor_action_group.radar[0].id
   }
 }
+
+# Workbook "Radar Costa Brava – Salud": un panel con 4 gráficos para ver de un vistazo
+# cómo va la función. Está en Monitor > Workbooks (o en el App Insights > Workbooks).
+resource "random_uuid" "workbook" {} # Azure exige que el nombre de un Workbook sea un GUID
+
+locals {
+  # Cada gráfico es una consulta KQL sobre Application Insights
+  graficos_salud = [
+    {
+      titulo = "Ejecuciones por hora"
+      tipo   = "barchart"
+      query  = <<-KQL
+        requests
+        | summarize Correctas = countif(success == true), Fallidas = countif(success == false) by bin(timestamp, 1h)
+        | order by timestamp asc
+      KQL
+    },
+    {
+      titulo = "Errores y avisos por hora"
+      tipo   = "barchart"
+      query  = <<-KQL
+        traces
+        | summarize Errores = countif(severityLevel >= 3), Avisos = countif(severityLevel == 2) by bin(timestamp, 1h)
+        | order by timestamp asc
+      KQL
+    },
+    {
+      titulo = "Duración de la función (segundos)"
+      tipo   = "timechart"
+      query  = <<-KQL
+        requests
+        | summarize Media = round(avg(duration) / 1000, 2), ['Más lenta'] = round(max(duration) / 1000, 2) by bin(timestamp, 1h)
+        | order by timestamp asc
+      KQL
+    },
+    {
+      titulo = "Aviones detectados por hora"
+      tipo   = "timechart"
+      query  = <<-KQL
+        traces
+        | where message startswith "Radar:"
+        | parse message with "Radar: " aviones:int " aviones ahora" *
+        | summarize Media = round(avg(aviones), 1), ['Máximo'] = max(aviones) by bin(timestamp, 1h)
+        | order by timestamp asc
+      KQL
+    },
+  ]
+}
+
+resource "azurerm_application_insights_workbook" "salud" {
+  name                = random_uuid.workbook.result
+  resource_group_name = azurerm_resource_group.radar.name
+  location            = azurerm_resource_group.radar.location
+  display_name        = "Radar Costa Brava – Salud"
+  source_id           = lower(azurerm_application_insights.radar.id) # tiene que ir en minúsculas
+  category            = "workbook"
+  tags                = local.tags
+
+  data_json = jsonencode({
+    version             = "Notebook/1.0"
+    fallbackResourceIds = [azurerm_application_insights.radar.id]
+    isLocked            = false
+    items = concat(
+      [
+        {
+          type = 1
+          name = "titulo"
+          content = {
+            json = "## Radar Costa Brava – Salud\nCómo va la Azure Function que recoge los aviones cada 5 minutos. Si algo se tuerce, aquí se ve antes que en la web."
+          }
+        },
+        {
+          type = 9
+          name = "periodo"
+          content = {
+            version = "KqlParameterItem/1.0"
+            style   = "pills"
+            parameters = [{
+              id         = "6c1a4c8e-2b0f-4f7a-9d55-0e6f1f2a3b4c"
+              version    = "KqlParameterItem/1.0"
+              name       = "Periodo"
+              type       = 4
+              isRequired = true
+              value      = { durationMs = 86400000 }
+              typeSettings = {
+                allowCustom = true
+                selectableValues = [
+                  { durationMs = 3600000 },
+                  { durationMs = 21600000 },
+                  { durationMs = 86400000 },
+                  { durationMs = 259200000 },
+                  { durationMs = 604800000 },
+                ]
+              }
+            }]
+          }
+        },
+      ],
+      [
+        for i, g in local.graficos_salud : {
+          type        = 3
+          name        = "grafico-${i + 1}"
+          customWidth = "50"
+          content = {
+            version                  = "KqlItem/1.0"
+            title                    = g.titulo
+            query                    = g.query
+            size                     = 0
+            queryType                = 0
+            resourceType             = "microsoft.insights/components"
+            timeContextFromParameter = "Periodo"
+            visualization            = g.tipo
+          }
+        }
+      ]
+    )
+  })
+}
